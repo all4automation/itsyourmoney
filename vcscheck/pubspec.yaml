@@ -1,5 +1,5 @@
 name: vcscheck
-description: "A new Flutter project."
+description: "Wealth projection calculator - financial planning app."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -34,6 +34,21 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+
+  # State management
+  flutter_riverpod: ^2.6.1
+
+  # Navigation
+  go_router: ^14.8.1
+
+  # Charts
+  fl_chart: ^0.70.2
+
+  # Persistence
+  shared_preferences: ^2.3.5
+
+  # Formatting
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
