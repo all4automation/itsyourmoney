@@ -3,22 +3,52 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/utils/currency_formatter.dart';
+import '../../domain/models/scenario_result.dart';
 import '../../router/app_router.dart';
 import '../providers/results_provider.dart';
+import '../providers/scenario_settings_provider.dart';
 import '../providers/user_input_provider.dart';
 import '../widgets/results/scenario_card.dart';
 import '../widgets/results/wealth_line_chart.dart';
 
-class ResultsScreen extends ConsumerWidget {
+class ResultsScreen extends ConsumerStatefulWidget {
   const ResultsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ResultsScreen> createState() => _ResultsScreenState();
+}
+
+class _ResultsScreenState extends ConsumerState<ResultsScreen> {
+  bool _showReal = false;
+
+  List<ScenarioResult> _applyInflation(
+    List<ScenarioResult> results,
+    double inflationRate,
+    int currentAge,
+  ) {
+    return results.map((r) {
+      final adjustedPoints = r.dataPoints.map((p) {
+        final years = p.age - currentAge;
+        double factor = 1.0;
+        for (int i = 0; i < years; i++) {
+          factor *= (1 + inflationRate);
+        }
+        return YearlyDataPoint(age: p.age, wealth: p.wealth / factor);
+      }).toList();
+      return ScenarioResult(
+        type: r.type,
+        returnRate: r.returnRate,
+        dataPoints: adjustedPoints,
+      );
+    }).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final results = ref.watch(resultsProvider);
     final input = ref.watch(userInputProvider);
 
     if (results == null || input == null) {
-      // Fallback: user navigated here directly without input
       return Scaffold(
         body: Center(
           child: Column(
@@ -36,6 +66,12 @@ class ResultsScreen extends ConsumerWidget {
       );
     }
 
+    final inflationRate = ref.watch(inflationRateProvider);
+    final formatter = ref.watch(currencyFormatterProvider);
+    final displayResults = _showReal
+        ? _applyInflation(results, inflationRate, input.currentAge)
+        : results;
+
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -47,7 +83,7 @@ class ResultsScreen extends ConsumerWidget {
             actions: [
               IconButton(
                 icon: const Icon(Icons.tune_rounded),
-                tooltip: 'Adjust return rates',
+                tooltip: 'Adjust rates',
                 onPressed: () => context.go(AppRoutes.adjust),
               ),
             ],
@@ -57,9 +93,46 @@ class ResultsScreen extends ConsumerWidget {
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 // Chart
-                WealthLineChart(results: results),
+                WealthLineChart(results: displayResults, formatter: formatter),
                 const SizedBox(height: 12),
-                ChartLegend(results: results),
+                ChartLegend(results: displayResults),
+                const SizedBox(height: 16),
+
+                // Nominal / Real toggle
+                Center(
+                  child: SegmentedButton<bool>(
+                    segments: const [
+                      ButtonSegment(
+                        value: false,
+                        label: Text('Nominal'),
+                        icon: Icon(Icons.attach_money),
+                      ),
+                      ButtonSegment(
+                        value: true,
+                        label: Text('Real (today\'s)'),
+                        icon: Icon(Icons.trending_down),
+                      ),
+                    ],
+                    selected: {_showReal},
+                    onSelectionChanged: (s) =>
+                        setState(() => _showReal = s.first),
+                    style: const ButtonStyle(
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                ),
+                if (_showReal)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      'Adjusted for ${CurrencyFormatter.percent(inflationRate)} p.a. inflation — showing purchasing power in today\'s money.',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 28),
 
                 // Heading
@@ -72,9 +145,9 @@ class ResultsScreen extends ConsumerWidget {
                 const SizedBox(height: 12),
 
                 // Scenario cards
-                ...results.map((r) => Padding(
+                ...displayResults.map((r) => Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: ScenarioCard(result: r),
+                      child: ScenarioCard(result: r, formatter: formatter),
                     )),
 
                 const SizedBox(height: 12),
@@ -95,16 +168,21 @@ class ResultsScreen extends ConsumerWidget {
                 ),
                 _SummaryRow(
                   label: 'Annual contribution (Year 1)',
-                  value: CurrencyFormatter.format(input.initialAnnualSavings),
+                  value: formatter.format(input.initialAnnualSavings),
                 ),
                 _SummaryRow(
                   label: 'Starting assets',
-                  value: CurrencyFormatter.format(input.currentAssets),
+                  value: formatter.format(input.currentAssets),
                 ),
                 _SummaryRow(
                   label: 'Income growth',
                   value: CurrencyFormatter.percent(input.incomeGrowthRate),
                 ),
+                if (_showReal)
+                  _SummaryRow(
+                    label: 'Inflation assumption',
+                    value: CurrencyFormatter.percent(inflationRate),
+                  ),
                 const SizedBox(height: 28),
 
                 // Actions

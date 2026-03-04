@@ -14,8 +14,13 @@ Color scenarioColor(ScenarioType type) {
 
 class ScenarioCard extends StatelessWidget {
   final ScenarioResult result;
+  final CurrencyFormatter formatter;
 
-  const ScenarioCard({super.key, required this.result});
+  const ScenarioCard({
+    super.key,
+    required this.result,
+    required this.formatter,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +59,7 @@ class ScenarioCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              CurrencyFormatter.format(result.finalWealth),
+              formatter.format(result.finalWealth),
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: theme.colorScheme.onSurface,

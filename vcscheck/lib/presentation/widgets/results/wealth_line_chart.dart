@@ -7,8 +7,13 @@ import 'scenario_card.dart';
 
 class WealthLineChart extends StatelessWidget {
   final List<ScenarioResult> results;
+  final CurrencyFormatter formatter;
 
-  const WealthLineChart({super.key, required this.results});
+  const WealthLineChart({
+    super.key,
+    required this.results,
+    required this.formatter,
+  });
 
   LineChartBarData _toLineData(ScenarioResult result) {
     final spots = result.dataPoints
@@ -33,7 +38,6 @@ class WealthLineChart extends StatelessWidget {
       color: theme.colorScheme.onSurfaceVariant,
     );
 
-    // Determine Y-axis max for padding
     final maxWealth = results
         .map((r) => r.finalWealth)
         .reduce((a, b) => a > b ? a : b);
@@ -63,7 +67,7 @@ class WealthLineChart extends StatelessWidget {
                 getTitlesWidget: (value, meta) => SideTitleWidget(
                   meta: meta,
                   child: Text(
-                    CurrencyFormatter.compact(value),
+                    formatter.compact(value),
                     style: textStyle,
                   ),
                 ),
@@ -91,7 +95,7 @@ class WealthLineChart extends StatelessWidget {
               getTooltipItems: (spots) => spots.map((s) {
                 final result = results[s.barIndex];
                 return LineTooltipItem(
-                  '${result.type.label}\n${CurrencyFormatter.format(s.y)}',
+                  '${result.type.label}\n${formatter.format(s.y)}',
                   TextStyle(
                     color: theme.colorScheme.onInverseSurface,
                     fontSize: 12,

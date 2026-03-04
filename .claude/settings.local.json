@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter run -d emulator-5554 --release)",
+      "Bash(flutter analyze lib/domain/services/wealth_calculator.dart)",
+      "WebFetch(domain:web.utk.edu)"
+    ]
+  }
+}

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/utils/currency_formatter.dart';
 import '../../domain/models/scenario_type.dart';
 
 class ScenarioSettingsNotifier
@@ -26,3 +27,33 @@ final scenarioSettingsProvider =
     StateNotifierProvider<ScenarioSettingsNotifier, Map<ScenarioType, double>>(
   (ref) => ScenarioSettingsNotifier(),
 );
+
+class InflationRateNotifier extends StateNotifier<double> {
+  static const double defaultRate = 0.02;
+
+  InflationRateNotifier() : super(defaultRate);
+
+  void setRate(double rate) => state = rate;
+  void reset() => state = defaultRate;
+}
+
+final inflationRateProvider =
+    StateNotifierProvider<InflationRateNotifier, double>(
+  (ref) => InflationRateNotifier(),
+);
+
+class CurrencyNotifier extends StateNotifier<AppCurrency> {
+  CurrencyNotifier() : super(AppCurrency.eur);
+
+  void setCurrency(AppCurrency c) => state = c;
+  void reset() => state = AppCurrency.eur;
+}
+
+final currencyProvider =
+    StateNotifierProvider<CurrencyNotifier, AppCurrency>(
+  (ref) => CurrencyNotifier(),
+);
+
+final currencyFormatterProvider = Provider<CurrencyFormatter>((ref) {
+  return CurrencyFormatter(ref.watch(currencyProvider));
+});

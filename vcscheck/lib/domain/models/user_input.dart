@@ -6,6 +6,11 @@ class UserInput {
   final double savingsRate; // decimal, e.g. 0.20 for 20%
   final double incomeGrowthRate; // decimal, e.g. 0.03 for 3%
 
+  // Save More Tomorrow: additional savings rate added on each income increase
+  final bool saveMoreTomorrow;
+  final double smtBoostRate; // decimal, e.g. 0.03 = 3% extra per raise
+  final double smtMaxRate;   // decimal, max savings rate cap e.g. 0.50
+
   const UserInput({
     required this.currentAge,
     required this.targetAge,
@@ -13,6 +18,9 @@ class UserInput {
     required this.grossAnnualIncome,
     required this.savingsRate,
     required this.incomeGrowthRate,
+    this.saveMoreTomorrow = false,
+    this.smtBoostRate = 0.03,
+    this.smtMaxRate = 0.50,
   });
 
   int get horizonYears => targetAge - currentAge;
@@ -26,6 +34,9 @@ class UserInput {
     double? grossAnnualIncome,
     double? savingsRate,
     double? incomeGrowthRate,
+    bool? saveMoreTomorrow,
+    double? smtBoostRate,
+    double? smtMaxRate,
   }) {
     return UserInput(
       currentAge: currentAge ?? this.currentAge,
@@ -34,6 +45,9 @@ class UserInput {
       grossAnnualIncome: grossAnnualIncome ?? this.grossAnnualIncome,
       savingsRate: savingsRate ?? this.savingsRate,
       incomeGrowthRate: incomeGrowthRate ?? this.incomeGrowthRate,
+      saveMoreTomorrow: saveMoreTomorrow ?? this.saveMoreTomorrow,
+      smtBoostRate: smtBoostRate ?? this.smtBoostRate,
+      smtMaxRate: smtMaxRate ?? this.smtMaxRate,
     );
   }
 
@@ -46,7 +60,10 @@ class UserInput {
           currentAssets == other.currentAssets &&
           grossAnnualIncome == other.grossAnnualIncome &&
           savingsRate == other.savingsRate &&
-          incomeGrowthRate == other.incomeGrowthRate;
+          incomeGrowthRate == other.incomeGrowthRate &&
+          saveMoreTomorrow == other.saveMoreTomorrow &&
+          smtBoostRate == other.smtBoostRate &&
+          smtMaxRate == other.smtMaxRate;
 
   @override
   int get hashCode => Object.hash(
@@ -56,5 +73,8 @@ class UserInput {
         grossAnnualIncome,
         savingsRate,
         incomeGrowthRate,
+        saveMoreTomorrow,
+        smtBoostRate,
+        smtMaxRate,
       );
 }

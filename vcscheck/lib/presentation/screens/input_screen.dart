@@ -3,9 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../data/repositories/preferences_repository.dart';
+import '../../core/utils/currency_formatter.dart';
 import '../../domain/models/user_input.dart';
 import '../../router/app_router.dart';
+import '../providers/scenario_settings_provider.dart';
 import '../providers/user_input_provider.dart';
 import '../widgets/input/question_field.dart';
 
@@ -26,20 +27,22 @@ class _InputScreenState extends ConsumerState<InputScreen> {
   final _savingsRateCtrl = TextEditingController();
   final _growthRateCtrl = TextEditingController();
 
+  bool _saveMoreTomorrow = false;
+  double _smtBoostRate = 3.0; // shown as percent
+
   @override
   void initState() {
     super.initState();
-    // Pre-fill if user has previous input
     final existing = ref.read(userInputProvider);
     if (existing != null) {
       _currentAgeCtrl.text = existing.currentAge.toString();
       _targetAgeCtrl.text = existing.targetAge.toString();
       _assetsCtrl.text = existing.currentAssets.toStringAsFixed(0);
       _incomeCtrl.text = existing.grossAnnualIncome.toStringAsFixed(0);
-      _savingsRateCtrl.text =
-          (existing.savingsRate * 100).toStringAsFixed(0);
-      _growthRateCtrl.text =
-          (existing.incomeGrowthRate * 100).toStringAsFixed(1);
+      _savingsRateCtrl.text = (existing.savingsRate * 100).toStringAsFixed(0);
+      _growthRateCtrl.text = (existing.incomeGrowthRate * 100).toStringAsFixed(1);
+      _saveMoreTomorrow = existing.saveMoreTomorrow;
+      _smtBoostRate = existing.smtBoostRate * 100;
     }
   }
 
@@ -54,7 +57,7 @@ class _InputScreenState extends ConsumerState<InputScreen> {
     super.dispose();
   }
 
-  void _onCalculate() async {
+  void _onCalculate() {
     if (!_formKey.currentState!.validate()) return;
 
     final currentAge = int.parse(_currentAgeCtrl.text.trim());
@@ -73,23 +76,44 @@ class _InputScreenState extends ConsumerState<InputScreen> {
       grossAnnualIncome: income,
       savingsRate: savingsRate,
       incomeGrowthRate: growthRate,
+      saveMoreTomorrow: _saveMoreTomorrow,
+      smtBoostRate: _smtBoostRate / 100,
     );
 
     ref.read(userInputProvider.notifier).update(input);
-    await PreferencesRepository().saveUserInput(input);
-
-    if (mounted) context.go(AppRoutes.loading);
+    context.go(AppRoutes.loading);
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final currency = ref.watch(currencyProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Your Financial Profile')),
+      appBar: AppBar(
+        title: const Text('Your Financial Profile'),
+        actions: [
+          DropdownButton<AppCurrency>(
+            value: currency,
+            underline: const SizedBox(),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            items: AppCurrency.values
+                .map((c) => DropdownMenuItem(
+                      value: c,
+                      child: Text('${c.symbol} ${c.label}'),
+                    ))
+                .toList(),
+            onChanged: (c) {
+              if (c != null) {
+                ref.read(currencyProvider.notifier).setCurrency(c);
+              }
+            },
+          ),
+        ],
+      ),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -135,8 +159,10 @@ class _InputScreenState extends ConsumerState<InputScreen> {
                 label: 'Current Investable Assets',
                 controller: _assetsCtrl,
                 hint: '50000',
-                suffixText: '€',
+                suffixText: currency.symbol,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                infoText:
+                    'Include cash, stocks, and retirement accounts.\n\nYour home\'s value is intentionally excluded — you\'ll always need somewhere to live, so we keep it as a safety buffer.',
                 validator: (v) {
                   final n = double.tryParse(v?.replaceAll(',', '.') ?? '');
                   if (n == null || n < 0) return 'Enter a valid amount';
@@ -148,7 +174,7 @@ class _InputScreenState extends ConsumerState<InputScreen> {
                 label: 'Gross Annual Income',
                 controller: _incomeCtrl,
                 hint: '60000',
-                suffixText: '€',
+                suffixText: currency.symbol,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 validator: (v) {
                   final n = double.tryParse(v?.replaceAll(',', '.') ?? '');
@@ -188,21 +214,111 @@ class _InputScreenState extends ConsumerState<InputScreen> {
                   return null;
                 },
               ),
+              const SizedBox(height: 32),
+              _SectionHeader('Accelerate Your Plan'),
+              const SizedBox(height: 16),
+              _SmtCard(
+                enabled: _saveMoreTomorrow,
+                boostRate: _smtBoostRate,
+                onToggle: (v) => setState(() => _saveMoreTomorrow = v),
+                onBoostChanged: (v) => setState(() => _smtBoostRate = v),
+                theme: theme,
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: _onCalculate,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                ),
+                child: const Text('Calculate My Wealth'),
+              ),
+              const SizedBox(height: 8),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-          child: ElevatedButton(
-            onPressed: _onCalculate,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: theme.colorScheme.onPrimary,
+    );
+  }
+}
+
+class _SmtCard extends StatelessWidget {
+  final bool enabled;
+  final double boostRate;
+  final ValueChanged<bool> onToggle;
+  final ValueChanged<double> onBoostChanged;
+  final ThemeData theme;
+
+  const _SmtCard({
+    required this.enabled,
+    required this.boostRate,
+    required this.onToggle,
+    required this.onBoostChanged,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: enabled
+          ? theme.colorScheme.primaryContainer
+          : theme.colorScheme.surfaceContainerHighest,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Save More Tomorrow',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Automatically increase your savings rate with each raise — painlessly.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch(value: enabled, onChanged: onToggle),
+              ],
             ),
-            child: const Text('Calculate My Wealth'),
-          ),
+            if (enabled) ...[
+              const SizedBox(height: 16),
+              Text(
+                'Extra savings per raise: ${boostRate.toStringAsFixed(1)}%',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Slider(
+                value: boostRate,
+                min: 0.5,
+                max: 10,
+                divisions: 19,
+                label: '${boostRate.toStringAsFixed(1)}%',
+                onChanged: onBoostChanged,
+              ),
+              Text(
+                'Example: On a 10% raise, ${boostRate.toStringAsFixed(1)}% goes to savings, '
+                '${(10 - boostRate).clamp(0, 10).toStringAsFixed(1)}% to lifestyle.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );

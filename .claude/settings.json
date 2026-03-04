@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter analyze)",
+      "Bash(adb shell input keyevent KEYCODE_WAKEUP)",
+      "Bash(emulator -list-avds)",
+      "Bash(flutter emulators)",
+      "Bash(adb devices)",
+      "Bash(flutter run --release -d emulator-5554)",
+      "Bash(flutter emulators --launch Pixel_7_Pro)",
+      "Bash(adb wait-for-device)",
+      "Bash(adb shell getprop sys.boot_completed)",
+      "Bash(\"/c/Program Files/Android/Android Studio/jbr/bin/keytool.exe\" -storepasswd -keystore \"d:\\\\App\\\\VCSCHECK\\\\vcscheck\\\\keystore\\\\itsyourmoney-release.jks\" -storepass \"ChangeMe123!\" -new \"n%j6Obql@BlS4X7KG*82\")",
+      "Bash(\"/c/Program Files/Android/Android Studio/jbr/bin/keytool.exe\" -keypasswd -alias itsyourmoney -keystore \"d:\\\\App\\\\VCSCHECK\\\\vcscheck\\\\keystore\\\\itsyourmoney-release.jks\" -storepass \"n%j6Obql@BlS4X7KG*82\" -keypass \"ChangeMe123!\" -new \"n%j6Obql@BlS4X7KG*82\")"
+    ]
+  }
+}

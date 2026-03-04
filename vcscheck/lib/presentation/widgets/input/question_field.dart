@@ -5,6 +5,7 @@ class QuestionField extends StatelessWidget {
   final String label;
   final String? hint;
   final String? suffixText;
+  final String? infoText;
   final TextEditingController controller;
   final TextInputType keyboardType;
   final String? Function(String?)? validator;
@@ -16,6 +17,7 @@ class QuestionField extends StatelessWidget {
     required this.controller,
     this.hint,
     this.suffixText,
+    this.infoText,
     this.keyboardType = TextInputType.number,
     this.validator,
     this.inputFormatters,
@@ -27,11 +29,38 @@ class QuestionField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: theme.textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+        Row(
+          children: [
+            Text(
+              label,
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (infoText != null) ...[
+              const SizedBox(width: 6),
+              GestureDetector(
+                onTap: () => showDialog(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: Text(label),
+                    content: Text(infoText!),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Got it'),
+                      ),
+                    ],
+                  ),
+                ),
+                child: Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ],
+          ],
         ),
         const SizedBox(height: 8),
         TextFormField(
