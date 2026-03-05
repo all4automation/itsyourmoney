@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Background: same blue as app primary color -->
+  <rect width="1024" height="1024" rx="220" fill="#435E91"/>
+
+  <!--
+    Material Icons: trending_up (filled)
+    Original viewBox: 0 0 24 24, content bounding box x:2–22, y:6–18
+    Scale 32, centered: translate(128, 128) → content at (192,320)–(832,704), centered at (512,512)
+  -->
+  <g transform="translate(128 128) scale(32)">
+    <path
+      d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6.01 4 4 6.36-6.37L22 12V6h-6z"
+      fill="white"/>
+  </g>
+</svg>
