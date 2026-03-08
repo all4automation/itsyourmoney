@@ -1,4 +1,4 @@
-package com.example.vcscheck
+package com.itsyourmoney.app
 
 import io.flutter.embedding.android.FlutterActivity
 
