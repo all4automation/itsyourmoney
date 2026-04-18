@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../../core/utils/currency_formatter.dart';
 import '../../domain/models/scenario_result.dart';
@@ -20,6 +21,30 @@ class ResultsScreen extends ConsumerStatefulWidget {
 
 class _ResultsScreenState extends ConsumerState<ResultsScreen> {
   bool _showReal = false;
+  BannerAd? _bannerAd;
+  bool _bannerLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _bannerAd = BannerAd(
+      adUnitId: const bool.fromEnvironment('dart.vm.product')
+          ? 'ca-app-pub-8481063172918744/4280101566'
+          : 'ca-app-pub-3940256099942544/6300978111',
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (_) => setState(() => _bannerLoaded = true),
+        onAdFailedToLoad: (ad, _) => ad.dispose(),
+      ),
+    )..load();
+  }
+
+  @override
+  void dispose() {
+    _bannerAd?.dispose();
+    super.dispose();
+  }
 
   List<ScenarioResult> _applyInflation(
     List<ScenarioResult> results,
@@ -75,6 +100,12 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      bottomNavigationBar: _bannerLoaded && _bannerAd != null
+          ? SizedBox(
+              height: _bannerAd!.size.height.toDouble(),
+              child: AdWidget(ad: _bannerAd!),
+            )
+          : null,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(

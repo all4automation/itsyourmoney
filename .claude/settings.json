@@ -17,7 +17,11 @@
       "Bash(start \"d:\\\\App\\\\VCSCHECK\\\\vcscheck\\\\assets\\\\icon\\\\icon.svg\")",
       "Bash(adb emu kill)",
       "Bash(adb kill-server)",
-      "Bash(adb start-server)"
+      "Bash(adb start-server)",
+      "Bash(flutter build:*)",
+      "Bash(\"/c/Program Files/Inkscape/bin/inkscape.exe\" /d/App/VCSCHECK/vcscheck/assets/icon/icon.svg --export-type=png --export-filename=/d/App/VCSCHECK/vcscheck/assets/icon/icon_512.png --export-width=512 --export-height=512)",
+      "Bash(\"/c/Users/phili/AppData/Local/Android/Sdk/cmdline-tools/latest/bin/avdmanager.bat\" list:*)",
+      "Bash(cmd.exe /c \"C:\\\\Users\\\\phili\\\\AppData\\\\Local\\\\Android\\\\Sdk\\\\cmdline-tools\\\\latest\\\\bin\\\\avdmanager.bat list device 2>&1\")"
     ]
   }
 }
